@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Mental Health Text Prediction{% endblock %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>Active Chats</h1>
+    <ul>
+        {% for chat in active_chats %}
+            <li>
+                <a href="{{ url_for('load_chat', chat_id=chat.chat_id) }}">Chat started at {{ chat.start_time }} (ID: {{ chat.chat_id }})</a>
+                <a href="{{ url_for('delete_chat', chat_id=chat.chat_id) }}" class="btn btn-danger">Delete</a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+
+{% endblock %}

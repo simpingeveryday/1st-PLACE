@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Sequential Model Chat{% endblock %}
+
+{% block content %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <div class="chat-container">
+        <h1>RAG Model Chat Conversation</h1>
+        <div class="forms-container">
+            <form method="get" action="{{ url_for('start_chat') }}" class="start-chat-form">
+                <button type="submit">Start New Chat</button>
+            </form>
+            <form method="get" action="{{ url_for('list_chats', user_id=user_id) }}" class="list-chats-form">
+                <button type="submit">List Chats</button>
+            </form>
+        </div>
+        <div id="conversation" class="conversation-history">
+            {% for item in conversation_history %}
+            <div class="history-item {% if item['new'] %}new{% endif %}">
+                <div class="{{ item['class'] }}">
+                    <strong>{{ item['sender'] }}:</strong> {{ item['message'] }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <form action="{{ url_for('predict2', chat_id=chat_id, user_id=user_id)}}" method="POST" class="message-form">
+            <input type="text" name="input_text" placeholder="Type your message here..." required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+</body>
+
+<style>
+    .chat-container {
+        max-width: 700px; /* Adjusted width for better layout */
+        margin: 20px auto; /* Added vertical margin for spacing */
+        padding: 25px; /* Increased padding for better aesthetics */
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        background-color: #f0f0f0;
+    }
+
+    .forms-container {
+        display: flex;
+        justify-content: space-between; /* Improved layout of start and list chat buttons */
+        margin-bottom: 20px; /* Added margin for separation */
+    }
+
+    .start-chat-form, .list-chats-form {
+        display: inline-block; /* Align forms side by side */
+    }
+
+    #conversation {
+        max-height: 350px; /* Adjusted for better visibility of chat history */
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #fff;
+        margin-bottom: 20px; /* Increased margin for visual separation */
+    }
+
+    .message-form input[type="text"], .message-form button[type="submit"] {
+        width: calc(100% - 110px); /* Adjusted input width to fit the button */
+        padding: 10px;
+        margin-right: 10px; /* Added margin between input and button */
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        display: inline-block; /* Ensured input and button are on the same line */
+    }
+
+    .message-form button[type="submit"] {
+        width: 100px; /* Fixed width for uniform buttons */
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .history-item.new {
+        animation: fadeIn 0.5s ease-in-out;
+        opacity: 1; /* Ensure visibility */
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+<script>
+    var conversationHistory = document.getElementById("conversation");
+
+// Function to scroll to the bottom of the chat container with a slow animation
+function scrollToBottomSlowly() {
+    var conversationHistory = document.getElementById("conversation");
+    var scrollHeight = conversationHistory.scrollHeight;
+    var currentScroll = conversationHistory.scrollTop;
+    var step = 15; // Scroll step (adjust for desired speed)
+
+    function animateScroll() {
+        currentScroll += step;
+        conversationHistory.scrollTop = currentScroll;
+        
+        if (currentScroll < scrollHeight) {
+            requestAnimationFrame(animateScroll); // Continue scrolling
+        }
+    }
+
+    animateScroll();
+}
+
+// Call the scrollToBottomSlowly function when the page is loaded
+window.onload = scrollToBottomSlowly;
+
+// Add a new message with fade-in animation and scroll to the bottom slowly
+function addNewMessageWithSlowScroll(message) {
+    var conversationHistory = document.getElementById("conversation");
+    var newMessage = document.createElement("div");
+    newMessage.className = "history-item new";
+    newMessage.innerHTML = message;
+    conversationHistory.appendChild(newMessage);
+    setTimeout(scrollToBottomSlowly, 25); // Scroll with a slight delay for the animation effect
+}
+</script>
+{% endblock %}

@@ -1,0 +1,153 @@
+cd "C:\Users\seeho\OneDrive\NYP SIT Practicals\Y3S2\AAP\AAPGrp\RespiteRx"
+
+.\respite\Scripts\activate
+
+cd "C:\Users\seeho\OneDrive\1st PLACE"
+
+have to pip uninstall mysql-connector-python
+ and then pip install mysql-connector-python
+
+
+langchain==0.1.6
+
+
+below is the text for the mysql database 
+
+CREATE DATABASE  IF NOT EXISTS `memory_journal` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `memory_journal`;
+-- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
+--
+-- Host: 127.0.0.1    Database: memory_journal
+-- ------------------------------------------------------
+-- Server version	8.0.36
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `chatbot`
+--
+
+DROP TABLE IF EXISTS `chatbot`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `chatbot` (
+  `chat_id` VARCHAR(255) NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `conversation_history` text,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`chat_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `chatbot`
+--
+
+LOCK TABLES `chatbot` WRITE;
+/*!40000 ALTER TABLE `chatbot` DISABLE KEYS */;
+/*!40000 ALTER TABLE `chatbot` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `entries`
+--
+
+DROP TABLE IF EXISTS `entries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `entries` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `text` text NOT NULL,
+  `emotion` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `entries`
+--
+
+LOCK TABLES `entries` WRITE;
+/*!40000 ALTER TABLE `entries` DISABLE KEYS */;
+INSERT INTO `entries` VALUES (52,'i am happy','joy','2024-02-11 23:23:59'),(53,'i am very happy, i just became a father','joy','2024-02-12 05:20:14'),(54,'I AM SUPER Sad','joy','2024-02-12 05:30:21'),(55,'i am super sad','joy','2024-02-12 06:48:37'),(56,'i am very sad','sadness','2024-02-12 06:48:58'),(57,'i am sad','sadness','2024-02-12 06:53:01'),(58,'i am very happy','joy','2024-02-12 10:12:04');
+/*!40000 ALTER TABLE `entries` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `text_sentiments_scores`
+--
+
+DROP TABLE IF EXISTS `text_sentiments_scores`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `text_sentiments_scores` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `text` text NOT NULL,
+  `positive_score` float NOT NULL,
+  `neutral_score` float NOT NULL,
+  `negative_score` float NOT NULL,
+  `sentiment` varchar(8) NOT NULL,
+  `created` datetime DEFAULT CURRENT_TIMESTAMP,
+  `user_id` int DEFAULT NULL,
+  `emotion_score` decimal(5,4) DEFAULT NULL,
+  `emotion` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `text_sentiments_scores`
+--
+
+LOCK TABLES `text_sentiments_scores` WRITE;
+/*!40000 ALTER TABLE `text_sentiments_scores` DISABLE KEYS */;
+INSERT INTO `text_sentiments_scores` VALUES (1,'I am really sad right now.',0,0.03,0.97,'negative','2024-02-08 21:59:20',NULL,NULL,NULL),(2,'i am sad',0,0.02,0.97,'negative','2024-02-08 21:59:20',NULL,NULL,NULL),(3,'i am sad',0,0.02,0.97,'negative','2024-02-08 21:59:20',NULL,NULL,NULL),(4,'i am sad',0,0.02,0.97,'negative','2024-02-08 21:59:20',NULL,NULL,NULL),(5,'i am happy',0.98,0.02,0.01,'positive','2024-02-08 21:59:20',NULL,NULL,NULL),(6,'i am exicted',0.02,0.1,0.88,'negative','2024-02-08 21:59:20',NULL,NULL,NULL),(7,'i am glad that this happened',0.99,0.01,0,'positive','2024-02-08 21:59:20',NULL,NULL,NULL),(8,'i am sad',0,0.02,0.97,'negative','2024-02-09 21:59:20',NULL,NULL,NULL),(9,'i am sad',0,0.02,0.97,'negative','2024-02-09 21:59:20',NULL,NULL,NULL),(10,'i am sad',0,0.02,0.97,'negative','2024-02-08 21:59:20',NULL,NULL,NULL),(11,'i am very sad',0.01,0.03,0.96,'negative','2024-02-08 22:05:08',1,NULL,NULL),(12,'i am super sad',0.02,0.07,0.91,'negative','2024-02-08 22:07:33',1,NULL,NULL),(13,'i am sad',0,0.02,0.97,'negative','2024-02-12 22:07:59',1,NULL,NULL),(14,'i am sad',0,0.02,0.97,'negative','2024-02-08 22:47:59',1,NULL,NULL),(15,'I am really sad.',0.01,0.05,0.95,'negative','2024-02-09 14:53:23',1,NULL,NULL),(16,'Kill myself please. I cannot do this anymore.',0.03,0.26,0.72,'negative','2024-02-09 14:53:39',1,NULL,NULL),(17,'i am sad',0,0.02,0.97,'negative','2024-02-09 15:21:30',1,NULL,NULL),(18,'i am sad',0,0.02,0.97,'negative','2024-02-09 15:29:42',1,NULL,NULL),(19,'i am sad',0,0.02,0.97,'negative','2024-02-09 15:39:26',1,NULL,NULL),(20,'i am sad',0,0.02,0.97,'negative','2024-02-09 15:47:02',1,NULL,NULL),(21,'i am sad',0,0.02,0.97,'negative','2024-02-09 15:48:20',1,NULL,NULL),(22,'i am very happy',0.99,0.01,0,'positive','2024-02-09 20:55:13',1,NULL,NULL),(23,'i am very happy',0.99,0.01,0,'positive','2024-02-09 20:57:47',1,NULL,NULL),(24,'i am very happy',0.99,0.01,0,'positive','2024-02-09 20:59:35',1,NULL,NULL),(25,'i am ok',0.13,0.84,0.02,'neutral','2024-02-09 20:59:50',1,NULL,NULL),(26,'i am ok',0.13,0.84,0.02,'neutral','2024-02-09 21:00:54',1,NULL,NULL),(27,'i am sad',0,0.02,0.97,'negative','2024-02-09 21:04:09',1,NULL,NULL),(28,'i am sad',0,0.02,0.97,'negative','2024-02-09 23:07:39',1,NULL,NULL),(29,'i am sad',0,0.02,0.97,'negative','2024-02-09 23:10:36',1,NULL,NULL),(30,'i am sad',0,0.02,0.97,'negative','2024-02-09 23:11:22',1,NULL,NULL),(31,'I had a really bad day and am feeling very sad right now.',0,0.01,0.99,'negative','2024-02-09 23:26:56',1,NULL,NULL),(32,'i am sad right now \n',0.01,0.03,0.96,'negative','2024-02-12 02:40:51',1,NULL,NULL),(33,'i am sad right now \n',0.01,0.03,0.96,'negative','2024-02-12 02:41:43',1,NULL,NULL),(34,'i am sad',0,0.02,0.97,'negative','2024-02-12 02:41:55',1,NULL,NULL),(35,'i am sad',0,0.02,0.97,'negative','2024-02-12 03:43:09',1,NULL,NULL),(36,'i am happy',0.98,0.02,0.01,'positive','2024-02-12 07:23:57',4,NULL,NULL),(37,'i am very happy, i just became a father',0.98,0.02,0.01,'positive','2024-02-12 13:20:12',4,NULL,NULL),(38,'I AM SUPER Sad',0.11,0.11,0.78,'negative','2024-02-12 13:30:19',4,NULL,NULL),(39,'i am sad',0,0.02,0.97,'negative','2024-02-12 14:53:01',4,0.5041,'sadness'),(40,'i am very happy',0.99,0.01,0,'positive','2024-02-12 18:12:04',4,0.9441,'joy');
+/*!40000 ALTER TABLE `text_sentiments_scores` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `users` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `users`
+--
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES (4,'Dinesh','$2b$12$M3bIiLIb5WBLzkJu8hjnWuaPmNv9vRWo/8elkTFBLpTjTJIQsNgz.');
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2024-02-12 21:34:50
