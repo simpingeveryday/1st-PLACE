@@ -28,8 +28,9 @@ from nltk.stem import WordNetLemmatizer
 import wget
 import zipfile
 # nltk.download('punkt')
-# nltk.download('stopwords')
-# nltk.download('wordnet')
+nltk.download('punkt_tab')
+nltk.download('stopwords')
+nltk.download('wordnet')
 import uuid
 import joblib 
 import time
@@ -520,324 +521,341 @@ r_splitter = CharacterTextSplitter(
     chunk_size=240,
     chunk_overlap=16,
 )
-from langchain_community.embeddings.openai import OpenAIEmbeddings
+# from langchain_community.embeddings.openai import OpenAIEmbeddings
+from llama_index.embeddings.nvidia import NVIDIAEmbedding
 # embeddings_model = OpenAIEmbeddings()
-embeddings_model = NVIDIAEmbeddings(model="NV-Embed-QA", NVIDIA_API_KEY= nvapi_key)
-# client = OpenAI(
-#   base_url="https://ai.api.nvidia.com/v1/retrieval/nvidia"
-# )
-def index_docs(splitter, documents: List[Document], dest_embed_dir: str) -> None:
-    embeddings_model = NVIDIAEmbeddings(model="NV-Embed-QA", NVIDIA_API_KEY= nvapi_key)
-    # embeddings_model = NVIDIAEmbeddings(model="ai-embed-qa-4", model_type="query")
-    # embeddings_model = OpenAIEmbeddings()
-    texts = []
-    metadatas = []
-    for document in documents:
-        doc_texts = splitter.split_text(document.page_content)
-        texts.extend(doc_texts)
-        metadatas.extend([document.metadata] * len(doc_texts))
+embeddings_model = NVIDIAEmbeddings(model="NV-Embed-QA", NVIDIA_API_KEY= nvapi_key, truncate="END")
+client = OpenAI(
+  base_url="https://ai.api.nvidia.com/v1/retrieval/nvidia"
+)
+# def index_docs(splitter, documents: List[Document], dest_embed_dir: str) -> None:
+#     embeddings_model = NVIDIAEmbeddings(model="NV-Embed-QA", NVIDIA_API_KEY= nvapi_key)
+#     # embeddings_model = NVIDIAEmbeddings(model="ai-embed-qa-4", model_type="query")
+#     # embeddings_model = OpenAIEmbeddings()
+#     texts = []
+#     metadatas = []
+#     for document in documents:
+#         doc_texts = splitter.split_text(document.page_content)
+#         texts.extend(doc_texts)
+#         metadatas.extend([document.metadata] * len(doc_texts))
     
-    print("Documents processed:")
-    print(documents)
-    print(f"Number of texts: {len(texts)}")
-    print(f"Sample text: {texts[:1]}")
-    print(f"Sample metadata: {metadatas[:1]}")
+#     print("Documents processed:")
+#     print(documents)
+#     print(f"Number of texts: {len(texts)}")
+#     print(f"Sample text: {texts[:1]}")
+#     print(f"Sample metadata: {metadatas[:1]}")
 
-    if texts:
-        # embedding_dim = embeddings_model.get_embedding_dimension()
-        # print(f"Embedding dimension: {embedding_dim}")
-        if os.path.exists(dest_embed_dir):
-            update = FAISS.load_local(folder_path=dest_embed_dir, embeddings=embeddings_model)
-            update.add_texts(texts, metadatas=metadatas)
-            update.save_local(folder_path=dest_embed_dir)
-            # print("@shape:",update.shape)
-        else:
-            docsearch = FAISS.from_texts(texts, embeddings_model, metadatas)
-            docsearch.save_local(folder_path=dest_embed_dir)
-            # print("shaping:",docsearch.shape)
-    else:
-        print("No texts to embed, skipping FAISS indexing.")
+#     if texts:
+#         # embedding_dim = embeddings_model.get_embedding_dimension()
+#         # print(f"Embedding dimension: {embedding_dim}")
+#         if os.path.exists(dest_embed_dir):
+#             update = FAISS.load_local(folder_path=dest_embed_dir, embeddings=embeddings_model)
+#             update.add_texts(texts, metadatas=metadatas)
+#             update.save_local(folder_path=dest_embed_dir)
+#             # print("@shape:",update.shape)
+#         else:
+#             docsearch = FAISS.from_texts(texts, embeddings_model, metadatas)
+#             docsearch.save_local(folder_path=dest_embed_dir)
+#             # print("shaping:",docsearch.shape)
+#     else:
+#         print("No texts to embed, skipping FAISS indexing.")
 
-def load_and_transform_data_from_csv(file_path: str, embedding_path: str = "./embedding") -> None:
-    embedding_path = "./embedding"
-    print(f"Storing embeddings to {embedding_path}")
-    documents = []
-    with open(file_path, mode='r', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            metadata = {'source': 'CSV Import'}
-            documents.append(Document(row['answer'], metadata))
-    # Extract text from Document objects
-    # Extract text from Document objects
-    # texts = [doc.page_content for doc in documents]
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=0, length_function=len)
-    # documentss = text_splitter.create_documents(texts)
-    index_docs(splitter=text_splitter, documents=documents, dest_embed_dir=embedding_path)
-    print("Generated embeddings successfully")
+# def load_and_transform_data_from_csv(file_path: str, embedding_path: str = "./embedding") -> None:
+#     embedding_path = "./embedding"
+#     print(f"Storing embeddings to {embedding_path}")
+#     documents = []
+#     with open(file_path, mode='r', encoding='utf-8') as csvfile:
+#         reader = csv.DictReader(csvfile)
+#         for row in reader:
+#             metadata = {'source': 'CSV Import'}
+#             documents.append(Document(row['answer'], metadata))
+#     # Extract text from Document objects
+#     # Extract text from Document objects
+#     # texts = [doc.page_content for doc in documents]
+#     text_splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=0, length_function=len)
+#     # documentss = text_splitter.create_documents(texts)
+#     index_docs(splitter=text_splitter, documents=documents, dest_embed_dir=embedding_path)
+#     print("Generated embeddings successfully")
 
-def split_documents(documents, chunk_size=240, chunk_overlap=16):
-    r_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap
-    )
-    all_splits = []
-    for document in documents:
-        splits = r_splitter.split_text(document.page_content)
-        for split in splits:
-            all_splits.append(Document(split, document.metadata))
+# def split_documents(documents, chunk_size=240, chunk_overlap=16):
+#     r_splitter = RecursiveCharacterTextSplitter(
+#         chunk_size=chunk_size,
+#         chunk_overlap=chunk_overlap
+#     )
+#     all_splits = []
+#     for document in documents:
+#         splits = r_splitter.split_text(document.page_content)
+#         for split in splits:
+#             all_splits.append(Document(split, document.metadata))
 
-    return all_splits
+#     return all_splits
 
 # Path to your CSV file
-file_path = 'data/output_file.csv'
-# Load the data
-data = load_and_transform_data_from_csv(file_path)
-embedding_path = "embedding/"
-docsearch = FAISS.load_local(folder_path=embedding_path, embeddings=embeddings_model)
-retriever = docsearch.as_retriever()
+# file_path = 'data/output_file.csv'
+file_path = 'data/'
 
-from langchain.tools import BaseTool
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core import SimpleDirectoryReader
+from llama_index.core import Settings
+from llama_index.llms.nvidia import NVIDIA
 
-class DataRetriever(BaseTool):
-    name = "about dementia and mental health"
-    description = "Useful for when you need to answer questions about dementia patient's mental health needs, how to help them and so on."
+# Here we are using mixtral-8x7b-instruct-v0.1 model from API Catalog
+Settings.llm = NVIDIA(model="mistralai/mixtral-8x7b-instruct-v0.1")
+Settings.text_splitter = SentenceSplitter(chunk_size=400)
+documents = SimpleDirectoryReader(file_path).load_data()
 
-    def _run(self, query):
-        out = retriever.invoke(query)
-        o = out[0]
-        item=o.page_content.split('|')
-        output = '\n'.join(item)
-        return output
+from llama_index.core import VectorStoreIndex
+# When you use from_documents, your Documents are split into chunks and parsed into Node objects
+# By default, VectorStoreIndex stores everything in memory
+index = VectorStoreIndex.from_documents(documents)
+# # Load the data
+# data = load_and_transform_data_from_csv(file_path)
+# embedding_path = "embedding/"
+# docsearch = FAISS.load_local(folder_path=embedding_path, embeddings=embeddings_model)
+# retriever = docsearch.as_retriever()
 
-    def _arun(self, query: str):
-        raise NotImplementedError("This tool does not support async")
-sv=DataRetriever()
+# from langchain.tools import BaseTool
 
-from langchain_community.tools.wikipedia.tool import WikipediaQueryRun
-from langchain_community.utilities import WikipediaAPIWrapper
+# class DataRetriever(BaseTool):
+#     name = "about dementia and mental health"
+#     description = "Useful for when you need to answer questions about dementia patient's mental health needs, how to help them and so on."
 
-wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
+#     def _run(self, query):
+#         out = retriever.invoke(query)
+#         o = out[0]
+#         item=o.page_content.split('|')
+#         output = '\n'.join(item)
+#         return output
 
-from langchain.tools import Tool
+#     def _arun(self, query: str):
+#         raise NotImplementedError("This tool does not support async")
+# sv=DataRetriever()
 
-## Make sure you give it a proper name and a good description on how to use the tools
-wiki_tool = Tool.from_function(
-    func=wikipedia.run,
-    name="Wiki",
-    description="useful for when you need to search certain topic on Wikipedia, aka wiki")
-retriever_tool=Tool.from_function(
-    func=sv.invoke,
-    name="Aboutdementiapatients",
-    description="useful for when you need to find information about dementia patients mental health needs")
+# from langchain_community.tools.wikipedia.tool import WikipediaQueryRun
+# from langchain_community.utilities import WikipediaAPIWrapper
 
-tools = [wiki_tool, retriever_tool]
+# wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
 
-from langchain_core.agents import AgentFinish
-from langgraph.prebuilt.tool_executor import ToolExecutor
-import os
-from langchain.agents import AgentExecutor
-from langchain.agents import initialize_agent
-from langchain.prompts import MessagesPlaceholder
-from langchain.memory import ConversationBufferMemory
-from langchain.agents import AgentType, Agent, ConversationalAgent
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-# This a helper class we have that is useful for running tools
-# It takes in an agent action and calls that tool and returns the result
-tool_executor = ToolExecutor(tools)
+# from langchain.tools import Tool
 
+# ## Make sure you give it a proper name and a good description on how to use the tools
+# wiki_tool = Tool.from_function(
+#     func=wikipedia.run,
+#     name="Wiki",
+#     description="useful for when you need to search certain topic on Wikipedia, aka wiki")
+# retriever_tool=Tool.from_function(
+#     func=sv.invoke,
+#     name="Aboutdementiapatients",
+#     description="useful for when you need to find information about dementia patients mental health needs")
 
+# tools = [wiki_tool, retriever_tool]
 
-
-
-llm = ChatNVIDIA(model="llama2_70b")
-
-memory = ConversationBufferMemory(memory_key="chat_history", input_key='input', output_key="output", return_messages=True)
-
-# question_generator = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
-
-
-prompt_template = """
-### [INST]
-
-Assistant is a large language model trained by Mistral.
-
-Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
-
-Assistant is constantly learning and improving, and its capabilities are constantly evolving. It is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. Additionally, Assistant is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide range of topics.
-
-Overall, Assistant is a powerful tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Assistant is here to assist.
-
-Context:
-------
-
-Assistant has access to the following tools:
-
-{tools}
-
-To use a tool, please use the following format:
-
-'''
-Thought: Do I need to use a tool? Yes
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-'''
-
-When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
-
-'''
-Thought: Do I need to use a tool? No
-Final Answer: [your response here]
-'''
-
-Begin!
-
-Previous conversation history:
-{chat_history}
-
-New input: {input}
-
-Current Scratchpad:
-{agent_scratchpad}
-
-[/INST]
- """
-
-# Create prompt from prompt template
-prompt = PromptTemplate(
-    input_variables=['agent_scratchpad', 'chat_history', 'input', 'tool_names', 'tools'],
-    template=prompt_template,
-)
-
-prompt = prompt.partial(
-    tools=[t.name for t in tools],
-    tool_names=", ".join([t.name for t in tools]),
-)
-print("prompt ---> \n", prompt)
-from typing import Any, Optional, Sequence
-
-from langchain_core._api import deprecated
-from langchain_core.callbacks import BaseCallbackManager
-from langchain_core.language_models import BaseLanguageModel
-from langchain_core.tools import BaseTool
-
-from langchain.agents.agent import AgentExecutor
-from langchain.agents.agent_types import AgentType
-from langchain.agents.loading import AGENT_TO_CLASS, load_agent
-
-agent_cls = AGENT_TO_CLASS[AgentType.CONVERSATIONAL_REACT_DESCRIPTION]
-agent_kwargs = {}
-agent_obj = agent_cls.from_llm_and_tools(
-    llm, tools, callback_manager=None, **agent_kwargs)
-
-agent_execute=AgentExecutor.from_agent_and_tools(
-        agent=agent_obj,
-        tools=tools,
-        callback_manager=None,
-        handle_parsing_errors=True,
-        verbose=True,
-        output_key = "output",
-        max_iterations=3,
-        return_intermediate_steps=True,
-        early_stopping_method="generate", # or use **force**
-        memory=ConversationBufferMemory(memory_key="chat_history", input_key='input', output_key="output")
-)
-from typing import TypedDict, Annotated, List, Union
-from langchain_core.agents import AgentAction, AgentFinish
-from langchain_core.messages import BaseMessage
-import operator
+# from langchain_core.agents import AgentFinish
+# from langgraph.prebuilt.tool_executor import ToolExecutor
+# import os
+# from langchain.agents import AgentExecutor
+# from langchain.agents import initialize_agent
+# from langchain.prompts import MessagesPlaceholder
+# from langchain.memory import ConversationBufferMemory
+# from langchain.agents import AgentType, Agent, ConversationalAgent
+# from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+# # This a helper class we have that is useful for running tools
+# # It takes in an agent action and calls that tool and returns the result
+# tool_executor = ToolExecutor(tools)
 
 
-class AgentState(TypedDict):
-    # The input string
-    input: str
-    # The list of previous messages in the conversation
-    chat_history: list[BaseMessage]
-    # The outcome of a given call to the agent
-    # Needs `None` as a valid type, since this is what this will start as
-    agent_outcome: Union[AgentAction, AgentFinish, None]
-    # List of actions and corresponding observations
-    # Here we annotate this with `operator.add` to indicate that operations to
-    # this state should be ADDED to the existing values (not overwrite it)
-    intermediate_steps: Annotated[list[tuple[AgentAction, str]], operator.add]
 
-# Define the agent
-from langchain_core.agents import AgentActionMessageLog
 
-def run_agent(data):
-    inputs = data.copy()
-    print(inputs)
-    text = inputs['input']
-    agent_outcome = agent_execute.invoke({"input":text})
-    return {"agent_outcome": agent_outcome}
 
-# Define the function to execute tools
-def execute_tools(data):
-    # Get the most recent agent_outcome - this is the key added in the `agent` above
-    agent_output = data["agent_outcome"]
-    if len(agent_output['intermediate_steps'])>=1 :
-        agent_action = agent_output['intermediate_steps'][0][0]
-        output = tool_executor.invoke(agent_action)
-        return {"intermediate_steps": [(agent_action, str(output))]}
-    else:
-        return {"intermediate_steps":[]}
+# llm = ChatNVIDIA(model="llama2_70b")
 
-# Define logic that is used to determine which conditional edge to go down
-def should_continue(data):
-    # If the agent outcome is an AgentFinish, then we return `exit` string
-    # This will be used when setting up the graph to define the flow
-    if data["agent_outcome"]["output"] is not None:
-        print(" **AgentFinish** " )
-        return "end"
-    # Otherwise, an AgentAction is returned
-    # Here we return `continue` string
-    # This will be used when setting up the graph to define the flow
-    else:
-        print(" **continue** " )
-        return "continue"
+# memory = ConversationBufferMemory(memory_key="chat_history", input_key='input', output_key="output", return_messages=True)
 
-from langgraph.graph import END, StateGraph
+# # question_generator = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
 
-# Define a new graph
-workflow = StateGraph(AgentState)
 
-# Define the two nodes we will cycle between
-workflow.add_node("agent", run_agent)
-workflow.add_node("action", execute_tools)
+# prompt_template = """
+# ### [INST]
 
-# Set the entrypoint as `agent`
-# This means that this node is the first one called
-workflow.set_entry_point("agent")
+# Assistant is a large language model trained by Mistral.
 
-# We now add a conditional edge
-workflow.add_conditional_edges(
-    # First, we define the start node. We use `agent`.
-    # This means these are the edges taken after the `agent` node is called.
-    "agent",
-    # Next, we pass in the function that will determine which node is called next.
-    should_continue,
-    # Finally we pass in a mapping.
-    # The keys are strings, and the values are other nodes.
-    # END is a special node marking that the graph should finish.
-    # What will happen is we will call `should_continue`, and then the output of that
-    # will be matched against the keys in this mapping.
-    # Based on which one it matches, that node will then be called.
-    {
-        # If `tools`, then we call the tool node.
-        "continue": "action",
-        # Otherwise we finish.
-        "end": END,
-    },
-)
+# Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
 
-# We now add a normal edge from `tools` to `agent`.
-# This means that after `tools` is called, `agent` node is called next.
-workflow.add_edge("action", "agent")
+# Assistant is constantly learning and improving, and its capabilities are constantly evolving. It is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. Additionally, Assistant is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide range of topics.
 
-# Finally, we compile it!
-# This compiles it into a LangChain Runnable,
-# meaning you can use it as you would any other runnable
-appss = workflow.compile()
+# Overall, Assistant is a powerful tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Assistant is here to assist.
+
+# Context:
+# ------
+
+# Assistant has access to the following tools:
+
+# {tools}
+
+# To use a tool, please use the following format:
+
+# '''
+# Thought: Do I need to use a tool? Yes
+# Action: the action to take, should be one of [{tool_names}]
+# Action Input: the input to the action
+# Observation: the result of the action
+# '''
+
+# When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
+
+# '''
+# Thought: Do I need to use a tool? No
+# Final Answer: [your response here]
+# '''
+
+# Begin!
+
+# Previous conversation history:
+# {chat_history}
+
+# New input: {input}
+
+# Current Scratchpad:
+# {agent_scratchpad}
+
+# [/INST]
+#  """
+
+# # Create prompt from prompt template
+# prompt = PromptTemplate(
+#     input_variables=['agent_scratchpad', 'chat_history', 'input', 'tool_names', 'tools'],
+#     template=prompt_template,
+# )
+
+# prompt = prompt.partial(
+#     tools=[t.name for t in tools],
+#     tool_names=", ".join([t.name for t in tools]),
+# )
+# print("prompt ---> \n", prompt)
+# from typing import Any, Optional, Sequence
+
+# from langchain_core._api import deprecated
+# from langchain_core.callbacks import BaseCallbackManager
+# from langchain_core.language_models import BaseLanguageModel
+# from langchain_core.tools import BaseTool
+
+# from langchain.agents.agent import AgentExecutor
+# from langchain.agents.agent_types import AgentType
+# from langchain.agents.loading import AGENT_TO_CLASS, load_agent
+
+# agent_cls = AGENT_TO_CLASS[AgentType.CONVERSATIONAL_REACT_DESCRIPTION]
+# agent_kwargs = {}
+# agent_obj = agent_cls.from_llm_and_tools(
+#     llm, tools, callback_manager=None, **agent_kwargs)
+
+# agent_execute=AgentExecutor.from_agent_and_tools(
+#         agent=agent_obj,
+#         tools=tools,
+#         callback_manager=None,
+#         handle_parsing_errors=True,
+#         verbose=True,
+#         output_key = "output",
+#         max_iterations=3,
+#         return_intermediate_steps=True,
+#         early_stopping_method="generate", # or use **force**
+#         memory=ConversationBufferMemory(memory_key="chat_history", input_key='input', output_key="output")
+# )
+# from typing import TypedDict, Annotated, List, Union
+# from langchain_core.agents import AgentAction, AgentFinish
+# from langchain_core.messages import BaseMessage
+# import operator
+
+
+# class AgentState(TypedDict):
+#     # The input string
+#     input: str
+#     # The list of previous messages in the conversation
+#     chat_history: list[BaseMessage]
+#     # The outcome of a given call to the agent
+#     # Needs `None` as a valid type, since this is what this will start as
+#     agent_outcome: Union[AgentAction, AgentFinish, None]
+#     # List of actions and corresponding observations
+#     # Here we annotate this with `operator.add` to indicate that operations to
+#     # this state should be ADDED to the existing values (not overwrite it)
+#     intermediate_steps: Annotated[list[tuple[AgentAction, str]], operator.add]
+
+# # Define the agent
+# from langchain_core.agents import AgentActionMessageLog
+
+# def run_agent(data):
+#     inputs = data.copy()
+#     print(inputs)
+#     text = inputs['input']
+#     agent_outcome = agent_execute.invoke({"input":text})
+#     return {"agent_outcome": agent_outcome}
+
+# # Define the function to execute tools
+# def execute_tools(data):
+#     # Get the most recent agent_outcome - this is the key added in the `agent` above
+#     agent_output = data["agent_outcome"]
+#     if len(agent_output['intermediate_steps'])>=1 :
+#         agent_action = agent_output['intermediate_steps'][0][0]
+#         output = tool_executor.invoke(agent_action)
+#         return {"intermediate_steps": [(agent_action, str(output))]}
+#     else:
+#         return {"intermediate_steps":[]}
+
+# # Define logic that is used to determine which conditional edge to go down
+# def should_continue(data):
+#     # If the agent outcome is an AgentFinish, then we return `exit` string
+#     # This will be used when setting up the graph to define the flow
+#     if data["agent_outcome"]["output"] is not None:
+#         print(" **AgentFinish** " )
+#         return "end"
+#     # Otherwise, an AgentAction is returned
+#     # Here we return `continue` string
+#     # This will be used when setting up the graph to define the flow
+#     else:
+#         print(" **continue** " )
+#         return "continue"
+
+# from langgraph.graph import END, StateGraph
+
+# # Define a new graph
+# workflow = StateGraph(AgentState)
+
+# # Define the two nodes we will cycle between
+# workflow.add_node("agent", run_agent)
+# workflow.add_node("action", execute_tools)
+
+# # Set the entrypoint as `agent`
+# # This means that this node is the first one called
+# workflow.set_entry_point("agent")
+
+# # We now add a conditional edge
+# workflow.add_conditional_edges(
+#     # First, we define the start node. We use `agent`.
+#     # This means these are the edges taken after the `agent` node is called.
+#     "agent",
+#     # Next, we pass in the function that will determine which node is called next.
+#     should_continue,
+#     # Finally we pass in a mapping.
+#     # The keys are strings, and the values are other nodes.
+#     # END is a special node marking that the graph should finish.
+#     # What will happen is we will call `should_continue`, and then the output of that
+#     # will be matched against the keys in this mapping.
+#     # Based on which one it matches, that node will then be called.
+#     {
+#         # If `tools`, then we call the tool node.
+#         "continue": "action",
+#         # Otherwise we finish.
+#         "end": END,
+#     },
+# )
+
+# # We now add a normal edge from `tools` to `agent`.
+# # This means that after `tools` is called, `agent` node is called next.
+# workflow.add_edge("action", "agent")
+
+# # Finally, we compile it!
+# # This compiles it into a LangChain Runnable,
+# # meaning you can use it as you would any other runnable
+# appss = workflow.compile()
 
 
 
@@ -854,31 +872,32 @@ appss = workflow.compile()
 # )
 # return chain
 from langchain_core.language_models.base import LanguageModelInput
-
+query_engine = index.as_query_engine(similarity_top_k=10)
 @app.route('/predict2/<chat_id>', methods=['GET', 'POST'])
 def predict2(chat_id):
     user_id = session['user_id']
     casual_inquiries = ['hello', 'hi', 'hey', 'what are you doing', 'how are you']
 
     def should_fallback(generated_response, input_text):
+    # Ensure generated_response is a string (or get the text from the response object)
+        generated_text = generated_response.get('text', '') if isinstance(generated_response, dict) else str(generated_response)
+
         is_casual = any(inquiry in input_text.lower() for inquiry in casual_inquiries)
-        # Criteria for when the bot's response is uncertain or not helpful
-        is_uncertain = "I'm not sure" in generated_response
-        is_too_short = len(generated_response.split()) < 3  # Example threshold
+        
+        # Check if generated_response is uncertain
+        is_uncertain = "I'm not sure" in generated_text
+        is_too_short = len(generated_text.split()) < 3  # Example threshold
 
         # Implement the fallback logic
         if is_casual and (is_uncertain or is_too_short):
-            # Allow the bot to attempt small talk, but fallback if uncertain or response is too short
             return True
         elif is_casual:
-            # No fallback needed for casual conversation, unless the response is uncertain or too short
             return is_uncertain or is_too_short
         elif is_uncertain or is_too_short:
-            # Generic fallback for other uncertain or short responses
             return True
         else:
-            # No fallback needed if none of the above conditions are met
             return False
+
     # Load or initialize conversation history
     user_chats = session.get('user_chats', {})
     # conversation_history = user_chats.get(chat_id, [])
@@ -920,20 +939,37 @@ def predict2(chat_id):
         # Process the input text with your conversational model
         # simple_chat_history = [f"{chat['sender']}: {chat['message']}" for chat in conversation_history]
         # Assuming you need to convert to a list of tuples format
-        chat_history_for_chain = [(chat['sender'], chat['message']) for chat in conversation_history]
 
-        # Then, pass this to the chain function
-        result = ({'input': input_text, 'chat_history': chat_history_for_chain})
-        result = appss.invoke({'input': input_text, 'chat_history': chat_history_for_chain})
-        # result = appss.invoke({'input': input_text, 'chat_history': conversation_history})
-        print(result)
-        generated_response = result.get('agent_outcome', {}).get('output', None)
+        
+
+        jgenerated_response = query_engine.query(input_text)
+        print(type(jgenerated_response))  # Check the type of the response
+        print(jgenerated_response)
+        generated_response = str(jgenerated_response)
+        print(generated_response)
+
+        # chat_history_for_chain = [(chat['sender'], chat['message']) for chat in conversation_history]
+
+        # # Then, pass this to the chain function
+        # result = ({'input': input_text, 'chat_history': chat_history_for_chain})
+        # result = appss.invoke({'input': input_text, 'chat_history': chat_history_for_chain})
+        # # result = appss.invoke({'input': input_text, 'chat_history': conversation_history})
+        # print(result)
+        # generated_response = result.get('agent_outcome', {}).get('output', None)
+
+
+
+
+
         # Append the new input and response to the conversation history
         # conversation_history.append({"user": input_text, "bot": result['answer']})
         # session[f'chat_history_{chat_id}'] = conversation_history
 
         # Extract the generated response
         # generated_response = response.choices[0].text.strip()
+
+
+
         if should_fallback(generated_response, input_text):
             # Check if it is a casual inquiry
             if any(inquiry in input_text.lower() for inquiry in casual_inquiries):
@@ -948,6 +984,9 @@ def predict2(chat_id):
 
         if should_fallback(generated_response, input_text):  # Implement this function based on your criteria
             generated_response = "I'm not sure how to answer that. Can you ask something else?"
+
+
+
 
         # Update conversation history
         conversation_history.append({'sender': 'User', 'message': input_text, 'class': 'user-message'})
