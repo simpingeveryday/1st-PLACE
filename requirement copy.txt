@@ -16,6 +16,7 @@ cd "C:\Users\seeho\OneDrive\1st PLACE"
 
 langchain==0.1.6
 
+pip install the whole requirements.txt file
 
 below is the text for the mysql database 
 
