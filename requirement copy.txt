@@ -1,18 +1,3 @@
-cd "C:\Users\seeho\OneDrive\NYP SIT Practicals\Y3S2\AAP\AAPGrp\RespiteRx"
-
-.\respite\Scripts\activate
-
-cd "C:\Users\seeho\OneDrive\1st PLACE"
-
-have to pip uninstall mysql-connector-python
- and then pip install mysql-connector-python
-
-C:\Users\seeho\OneDrive\1st PLACE
-
-.\llamaindex\Scripts\activate
-
-cd "C:\Users\seeho\OneDrive\1st PLACE"
-
 
 langchain==0.1.6
 
