@@ -1,7 +1,11 @@
+after finishing the below steps, run python app.py
+
+pip install the whole requirements.txt file
+
 
 langchain==0.1.6
 
-pip install the whole requirements.txt file
+
 
 below is the text for the mysql database 
 
